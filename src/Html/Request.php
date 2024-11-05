@@ -30,6 +30,7 @@ class Request {
     private static function postRequest()
     {
         $request = $_REQUEST;
+        $client = new Client();
         switch (true) {
             case isset($request['btn-home']):
                 // Ide kerülhet a home oldal kezelése
@@ -41,10 +42,11 @@ class Request {
                 break;
 
             case isset($request['btn-search']):
-                $id = $request['needle'] ?? null;
-                if ($id) 
+                $keyword = $request['needle'] ?? null;
+                if ($keyword) 
                 {
-                    PageCounties::table([self::getCountyById($id)]);
+                    $searchedCounty = $client->searchCounties($keyword);
+                    PageCounties::table($searchedCounty);
                 } 
                 else 
                 {
@@ -125,5 +127,13 @@ class Request {
         $response = $client->get('counties');
 
         return $response['data'] ?? null;
-    }   
+    }
+
+    public function searchCounties($keyword)
+    {
+        $counties = $this->get('counties')['data'];
+        return array_filter($counties, function($county) use ($keyword) {
+            return (stripos($county['name'], $keyword) !== false) || (string)$county['id'] === $keyword;
+        });
+    }
 }
